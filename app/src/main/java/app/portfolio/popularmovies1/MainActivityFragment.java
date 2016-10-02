@@ -1,13 +1,12 @@
 package app.portfolio.popularmovies1;
 
 import android.os.AsyncTask;
-import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
 import android.widget.GridView;
 
 import org.json.JSONArray;
@@ -22,14 +21,17 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * A placeholder fragment containing a simple view.
  */
 public class MainActivityFragment extends Fragment {
-    ArrayAdapter adapter;
+    ImageAdapter myCustomArrayAdapter;
     GridView gv;
-
+    String fetchurl;
+    String murllist;
+    List<String> urllist= new ArrayList<String>();
     public MainActivityFragment() {
     }
 
@@ -37,20 +39,23 @@ public class MainActivityFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        adapter = new ArrayAdapter<String>(getActivity(), R.layout.load_movies, R.id.image_load, new ArrayList<String>());
+      //  myCustomAdapter = new ArrayAdapter<String>(getActivity(), R.layout.load_movies, R.id.image_load, new ArrayList<String>());
         View rootview = inflater.inflate(R.layout.fragment_main, container, false);
         gv= (GridView) rootview.findViewById(R.id.grid_view);
 //adapter= new ImageAdapter(getActivity(),R.layout.load_movies,url);
-gv.setAdapter(adapter);
+//gv.setAdapter(adapter);
+
+        myCustomArrayAdapter = new ImageAdapter(getActivity(),urllist);
+        gv.setAdapter(myCustomArrayAdapter);
         return rootview;
 
     }
 
-public  class fetchposter extends AsyncTask<String,Void,Boolean> {
+public  class fetchposter extends AsyncTask<Object, Object, List<String>> {
 
     private final String log_tag = fetchposter.class.getSimpleName();
     @Override
-    protected Boolean doInBackground(String... params) {
+    protected List<String> doInBackground(Object... params) {
         String imgurl = "http://image.tmdb.org/t/p/w185";
         HttpURLConnection urlConnection = null;
         String jsonstr = null;
@@ -86,13 +91,17 @@ public  class fetchposter extends AsyncTask<String,Void,Boolean> {
             JSONObject obj = new JSONObject(jsonstr);
             JSONArray jarray = obj.getJSONArray("results");
 
+
             for (int i = 0; i < jarray.length(); i++) {
                 JSONObject object = jarray.getJSONObject(i);
                 String posterPath = object.getString("poster_path");
 
-String fetchurl=imgurl.concat(posterPath);
+fetchurl=imgurl.concat(posterPath);
+                urllist.add(fetchurl);
                 Log.v(log_tag,"poster_path"+posterPath.toString());
             }
+            return urllist;
+
 
 
         } catch (IOException e) {
@@ -103,7 +112,12 @@ String fetchurl=imgurl.concat(posterPath);
         return null;
     }
 
+    @Override
+    protected void onPostExecute(List<String> strings) {
+        myCustomArrayAdapter.clear();
+myCustomArrayAdapter.addAll(urllist);
+        super.onPostExecute(strings);
+    }
 }
-
 
 }
